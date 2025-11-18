@@ -1,3 +1,4 @@
+yy
 import requests
 import json
 from kafka import KafkaProducer
@@ -6,7 +7,7 @@ import time
 # === CONFIG ===
 OTX_API_KEY = "d5d6569f63ac5529eaedd477c6c86b27e167add7cc6bc4a2caf40e8de67fb3e7"
 OTX_URL = "https://otx.alienvault.com/api/v1/indicators/export"  # example endpoint
-KAFKA_BROKER = "localhost:8080"
+KAFKA_BROKER = "localhost:9092"
 KAFKA_TOPIC = "otx-stream"
 
 # Create Kafka producer
