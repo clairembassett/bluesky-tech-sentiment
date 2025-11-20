@@ -3,15 +3,14 @@ import json
 import time
 import duckdb 
 
-# CONSUMER THAT TAKES MESSAGES AND LOOPS THROUGH TO ADD THEM TO DUCKDB TABLE
-# WONT ACTUALLY END UP USING, JUST TESTED TO MAKE SURE LOGIC WORKED
+# SECOND CONSUMER THAT PROCESSES EACH ARTICLE AS INDIVIDUAL MESSAGE AND SAVES TO DUCKDB 
 
 def init_duckdb():
     # create connection 
     con = duckdb.connect("news.duckdb")
 
     con.execute("""
-        CREATE TABLE IF NOT EXISTS news (
+        CREATE TABLE IF NOT EXISTS processed_news3 (
             id INTEGER,
             author TEXT, 
             title TEXT, 
@@ -25,7 +24,7 @@ def init_duckdb():
 def insert_article(con, article):
     # insert into duckdb
     con.execute("""
-        INSERT INTO news (author, title, description, url, publishedAt)
+        INSERT INTO processed_news3 (author, title, description, url, publishedAt)
         VALUES (?, ?, ?, ?, ?);
     """, [
         article.get("author"),
@@ -33,8 +32,7 @@ def insert_article(con, article):
         article.get("description"),
         article.get("url"),
         article.get("publishedAt")
-    ]
-    )
+    ]) 
 
 def main():
     con = init_duckdb() 
@@ -44,7 +42,7 @@ def main():
         # set the logging level
         loglevel="DEBUG",
         # define the consumer group
-        consumer_group="newsconsume2",
+        consumer_group="news_processing3",
         # processing guarantees: 
         #   - exactly-once   - msg will be processe exactly once
         processing_guarantee="exactly-once",
@@ -54,7 +52,7 @@ def main():
 
 # Offset
     with app.get_consumer() as consumer:
-        consumer.subscribe(["news2"])
+        consumer.subscribe(["news_articles3"])
 
         while True:
             msg = consumer.poll(1)
@@ -64,22 +62,18 @@ def main():
             elif msg.error() is not None:
                 raise Exception(msg.error())
             else:
-                key = msg.key().decode("utf8")
+                key = msg.key().decode("utf8") if msg.key() else None 
                 value = json.loads(msg.value())
                 offset = msg.offset()
 
                 print(f"{offset} {key} {value}")
 
-                articles = value.get("articles", [])
-
-                for a in articles:
-                    insert_article(con, a)
-                
+                insert_article(con, value)
                 con.commit() 
 
 
                 consumer.store_offsets(msg)
-                time.sleep(10)
+                time.sleep(1)
 
 if __name__ == "__main__":
     try:

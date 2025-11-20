@@ -4,3 +4,9 @@
 2. Kafka consumer that iterates through each message and processes them as individual messages.
 3. Kafka producer 2 with second topic that consumes each individual news info as an individual message.
 4. Kafka consumer 2 that takes messages into second consumer group.
+
+
+Iliana notes from 11/19:
+- order for running scripts is producer-test -> con-prod -> second-consumer
+- each time I do a new run/test I just make a new table in the same db, so rn there's 3 tables and my red pandas has 3 different topics/consumer groups
+- bad news: we are losing some data. idk where, but i know that for the most recent one there was ~5700 total results in topic, but only 294 messages in the final consumer group & duckdb table.
