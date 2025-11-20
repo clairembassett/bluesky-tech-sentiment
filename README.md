@@ -10,3 +10,7 @@ Iliana notes from 11/19:
 - order for running scripts is producer-test -> con-prod -> second-consumer
 - each time I do a new run/test I just make a new table in the same db, so rn there's 3 tables and my red pandas has 3 different topics/consumer groups
 - bad news: we are losing some data. idk where, but i know that for the most recent one there was ~5700 total results in topic, but only 294 messages in the final consumer group & duckdb table.
+
+Iliana from 11/20:
+- tried to update con-prod.py to not lose as many data points but didn't work. 
+- main thing is got rid of the processing gurantee of exactly-once bc apparently manually polling and commiting offsets violated the exactly-once gurantee and can cause issues. however doing so didn't get rid of our data lose problem...

@@ -9,8 +9,9 @@ def init_duckdb():
     # create connection 
     con = duckdb.connect("news.duckdb")
 
+    # create table if not exists to store articles 
     con.execute("""
-        CREATE TABLE IF NOT EXISTS processed_news3 (
+        CREATE TABLE IF NOT EXISTS processed_news4 (
             id INTEGER,
             author TEXT, 
             title TEXT, 
@@ -24,7 +25,7 @@ def init_duckdb():
 def insert_article(con, article):
     # insert into duckdb
     con.execute("""
-        INSERT INTO processed_news3 (author, title, description, url, publishedAt)
+        INSERT INTO processed_news4 (author, title, description, url, publishedAt)
         VALUES (?, ?, ?, ?, ?);
     """, [
         article.get("author"),
@@ -35,48 +36,59 @@ def insert_article(con, article):
     ]) 
 
 def main():
+    # initialize connection 
     con = init_duckdb() 
 
+    # initialize app 
     app = Application(
         broker_address="localhost:19092",
-        # set the logging level
         loglevel="DEBUG",
-        # define the consumer group
-        consumer_group="news_processing3",
-        # processing guarantees: 
-        #   - exactly-once   - msg will be processe exactly once
-        processing_guarantee="exactly-once",
-        # set the offset reset - either earliest || latest
+        # make second new consumer group
+        consumer_group="news_processing4",
+        # use default at-least-once processing guarantees: 
+        # processing_guarantee="exactly-once",
         auto_offset_reset="earliest",
     )
 
-# Offset
+    # consume messages 
     with app.get_consumer() as consumer:
-        consumer.subscribe(["news_articles3"])
+        # second topic 
+        consumer.subscribe(["news_articles4"])
 
         while True:
             msg = consumer.poll(1)
 
             if msg is None:
                 print("Waiting...")
-            elif msg.error() is not None:
+
+            if msg.error():
                 raise Exception(msg.error())
-            else:
+
+            try: 
+                # decode 
                 key = msg.key().decode("utf8") if msg.key() else None 
-                value = json.loads(msg.value())
+                value = json.loads(msg.value().decode("utf-8"))
                 offset = msg.offset()
 
-                print(f"{offset} {key} {value}")
+                print(f"Processing: {offset}, {key}")
 
+                # insert into duckdb
                 insert_article(con, value)
+                # db commit 
                 con.commit() 
-
-
+                
+                # commit offset after db commit succeeds
                 consumer.store_offsets(msg)
                 time.sleep(1)
+
+            except json.JSONDecodeError as e:
+                print(f"WARNING: skipping {offset} because {e}") 
+                consumer.store_offsets(msg)
+
+                
 
 if __name__ == "__main__":
     try:
         main()
     except KeyboardInterrupt:
-        pass
+        print("Stopping consumer")

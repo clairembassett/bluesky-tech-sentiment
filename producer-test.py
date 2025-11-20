@@ -11,6 +11,7 @@ API_KEY = "0bf17253e36d46e3916ef825d6870e37"
 # url = "https://newsapi.org/v2/top-headlines?country=us&apiKey=0bf17253e36d46e3916ef825d6870e37"
 # url = "https://newsapi.org/v2/everything?q=Apple&apiKey=API_KEY"
 
+# searching for articles with cyber in the title/description, from Oct 21
 url = "https://newsapi.org/v2/everything?q=cyber&from=2025-10-21&sortBy=publishedAt&apiKey=0bf17253e36d46e3916ef825d6870e37"
 
 # tapping into the api 
@@ -35,8 +36,8 @@ def main():
             info = get_info()
             logging.debug(f"Got info: {info}")
             producer.produce(
-                topic="news3",
-                key="news3_key",
+                topic="news4",
+                key="news4_key",
                 value=json.dumps(info),
             )
             logging.info("Produced. Sleeping...")
