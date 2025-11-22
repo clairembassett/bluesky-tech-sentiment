@@ -14,3 +14,14 @@ Iliana notes from 11/19:
 Iliana from 11/20:
 - tried to update con-prod.py to not lose as many data points but didn't work. 
 - main thing is got rid of the processing gurantee of exactly-once bc apparently manually polling and commiting offsets violated the exactly-once gurantee and can cause issues. however doing so didn't get rid of our data lose problem...
+
+
+Claire 11/21
+- Going to retry our polling methods to do the for loop, because there are international articles coming up, plus will allow us for us to parse more?
+- Will label scripts producertest2, con-prod2, and second-consumer2
+- Little bit worried bc I can only make 100 requests per 24 hrs 
+- Switched to the gdelt api link here: https://blog.gdeltproject.org/gdelt-doc-2-0-api-debuts/
+- Set counter for producer to 1000, to test for leaky pipeline
+- Messages are recieved per article 
+- con-prod2 needs to have a break at 1000 articles(for now)
+- keep getting this error message for con-prod2 Constraint Error: NOT NULL constraint failed: gdelt_articles.id time for mallard!!
