@@ -16,9 +16,16 @@ def fetch_gdelt_data(query="cyber"):
         "format": "json"
     }
 
-    response = requests.get(GDELT_URL, params=params, timeout=10)
-    response.raise_for_status()
-    return response.json()
+    while True:
+        response = requests.get(GDELT_URL, params=params, timeout=10)
+        
+        # handle rate limits from api 
+        if response.status_code == 429:
+            logging.warning("429 Too Many Requests – backing off for 2 minutes...")
+            time.sleep(120)    
+            continue 
+        response.raise_for_status()
+        return response.json()
 
 
 # ---------------------------------------
@@ -61,13 +68,13 @@ def main():
                     break
 
                 # Wait a bit before the next API call
-                time.sleep(2)
+                time.sleep(60)
 
             except Exception as e:
                 logging.error(f"Error: {e}")
-                time.sleep(2)
+                time.sleep(60)
 
-    print("\n🎉 Finished! Collected exactly 1000 articles.\n")
+    print("\n Finished! Collected exactly 1000 articles.\n")
 
 
 if __name__ == "__main__":
