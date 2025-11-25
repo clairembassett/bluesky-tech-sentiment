@@ -1,8 +1,10 @@
 from quixstreams import Application
 import json
 import duckdb
+import time
+from threading import Lock
 
-DB_PATH = "gdeltnews.duckdb"
+DB_PATH = "/Users/clairebassett/gdeltnews.duckdb"   # Move out of OneDrive
 TABLE_NAME = "gdelt_articles"
 
 # intialize variable to keep track of processed articles
@@ -40,6 +42,7 @@ def insert_article(con, article):
     ])
     processed_count += 1
     print(f"Success, total processed: {processed_count}")
+
 
 def main():
     # initialize connection 
@@ -80,6 +83,7 @@ def main():
                 # commit offset after db commit succeeds
                 consumer.store_offsets(msg)
                 time.sleep(5)
+
 
 if __name__ == "__main__":
     try: 
