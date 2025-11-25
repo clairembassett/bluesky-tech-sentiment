@@ -3,6 +3,10 @@ import json
 import time
 
 def main():
+
+    Target = 1000
+    total_count = 0
+
     app = Application(
         broker_address="localhost:19092",
         consumer_group="gdelt_splitter_group",
@@ -10,43 +14,48 @@ def main():
         loglevel="DEBUG",
     )
 
-    consumer = app.get_consumer()
-    consumer.subscribe(["gdelt_cyber"])  # from your producer
-
     producer = app.get_producer()
 
-    print("GDELT Splitter running...")
+    with app.get_consumer() as consumer:
+        consumer.subscribe(["gdelt_cyber"])
 
-    while True:
-        msg = consumer.poll(1)
+        print("GDELT Splitter running...")
 
-        if msg is None:
-            print("Waiting for messages...")
-            continue
+        while total_count < Target:
 
-        if msg.error():
-            raise Exception(msg.error())
+            msg = consumer.poll(1)
 
-        # decode one article (already a dict)
-        raw = msg.value().decode("utf-8")
-        article = json.loads(raw)
+            if msg is None:
+                print("Waiting for messages...")
+                continue
 
-        key = msg.key().decode("utf-8") if msg.key() else "no_key"
+            if msg.error():
+                raise Exception(msg.error())
 
-        print(f"Received article from key: {key}")
+            # decode one article (json string → dict)
+            raw = msg.value().decode("utf-8")
+            article = json.loads(raw)
 
-        # send to new topic
-        producer.produce(
-            topic="gdelt_articles",
-            key=key,
-            value=json.dumps(article)
-        )
+            key = msg.key().decode("utf-8") if msg.key() else "no_key"
 
-        producer.flush()
-        print("Forwarded article.\n")
+            print(f"Received article from key: {key}")
 
-        consumer.store_offsets(msg)
-        time.sleep(0.5)
+            # forward to new topic
+            producer.produce(
+                topic="gdelt_articles",
+                key=key,
+                value=json.dumps(article)
+            )
+
+            producer.flush()
+
+            total_count += 1
+            print(f"Forwarded article #{total_count}/{Target}\n")
+
+            consumer.store_offsets(msg)
+            time.sleep(0.5)
+
+    print("Target reached — splitter stopping.")
 
 
 if __name__ == "__main__":
