@@ -62,6 +62,6 @@ if __name__ == "__main__":
     try:
         main()
     except KeyboardInterrupt:
-        print("Stopping splitter...")
+        print("Stopping splitter...") 
     except Exception as e:
         print(f"Error: {e}")
