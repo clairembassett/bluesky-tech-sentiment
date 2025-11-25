@@ -4,7 +4,10 @@ import duckdb
 import time
 from threading import Lock
 
-DB_PATH = "/Users/clairebassett/gdeltnews.duckdb"   # Move out of OneDrive
+# DB_PATH = "/Users/clairebassett/gdeltnews.duckdb"   # Move out of OneDrive
+DB_PATH = "gdeltnews.duckdb"
+# ur just gonna have to add ur specific path to the script when u go to run bc then i cant run it 
+
 TABLE_NAME = "gdelt_articles"
 
 # intialize variable to keep track of processed articles
