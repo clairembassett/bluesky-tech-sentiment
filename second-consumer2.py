@@ -5,52 +5,47 @@ import duckdb
 DB_PATH = "gdeltnews.duckdb"
 TABLE_NAME = "gdelt_articles"
 
-class ArticleSaver:
-    """
-    A class to manage the database connection and insertion of articles.
-    """
-    def __init__(self):
-        self.con = self._init_duckdb()
-        self.processed_count = 0
+# intialize variable to keep track of processed articles
+processed_count = 0
 
-    def _init_duckdb(self):
-        """Initialize DuckDB connection and table."""
-        con = duckdb.connect(DB_PATH)
-        con.execute(f"""
-            CREATE TABLE IF NOT EXISTS {TABLE_NAME} (
-                id INTEGER PRIMARY KEY,
-                author TEXT, 
-                title TEXT, 
-                description TEXT,
-                url TEXT UNIQUE, 
-                publishedAt TIMESTAMP
-            );
-        """)
-        return con
+def _init_duckdb(self):
+    # create duckdb connection 
+    con = duckdb.connect(DB_PATH)
 
-    def insert_article(self, article: dict):
-        """Insert a single article into DuckDB."""
-        # Do NOT specify 'id'; DuckDB will generate it automatically
-        self.con.execute(f"""
-            INSERT OR IGNORE INTO {TABLE_NAME} (author, title, description, url, publishedAt)
-            VALUES (?, ?, ?, ?, ?);
-        """, [
-            article.get("author"),
-            article.get("title"),
-            article.get("description"),
-            article.get("url"),
-            article.get("publishedAt")
-        ])
-        self.con.commit()
-        self.processed_count += 1
-        print(f"Processed article, total processed: {self.processed_count}")
+    # creat table if doesn't already exist to store articles
+    con.execute(f"""
+        CREATE TABLE IF NOT EXISTS {TABLE_NAME} (
+            id INTEGER PRIMARY KEY,
+            author TEXT, 
+            title TEXT, 
+            description TEXT,
+            url TEXT UNIQUE, 
+            publishedAt TIMESTAMP
+        );
+    """)
+    return con
 
-    def close(self):
-        """Close the DB connection."""
-        self.con.close()
-        print("DuckDB connection closed.")
+def insert_article(con, article):
+    # insert into duckdb 
+    # Do NOT specify 'id'; DuckDB will generate it automatically
+    con.execute(f"""
+        INSERT OR IGNORE INTO {TABLE_NAME} (author, title, description, url, publishedAt)
+        VALUES (?, ?, ?, ?, ?);
+    """, [
+        article.get("author"),
+        article.get("title"),
+        article.get("description"),
+        article.get("url"),
+        article.get("publishedAt")
+    ])
+    processed_count += 1
+    print(f"Success, total processed: {processed_count}")
 
 def main():
+    # initialize connection 
+    con = init_duckdb() 
+
+    # initialize app 
     app = Application(
         broker_address="localhost:19092",
         loglevel="DEBUG",
@@ -58,23 +53,36 @@ def main():
         auto_offset_reset="earliest",
     )
 
-    input_topic = app.topic("gdelt_articles", value_deserializer="json")
-    sdf = app.dataframe(input_topic)
+    # consume messages 
+    with app.get_consumer() as consume:
+        # topic
+        consumer.subscribe(["gdelt_articles"])
 
-    saver = ArticleSaver()
+        while True:
+            msg = consumer.poll(1)
 
-    # Apply the processing function to each message from the stream
-    sdf.apply(saver.insert_article)
+            if msg is None:
+                print("Waiting...")
+            
+            try: 
+                # decode
+                key = msg.key().decode("utf-8") if msg.key() else None
+                value = json.loads(msg.value().decode("utf-8"))
+                offset = msg.offset() 
 
-    print("DuckDB consumer running...")
-    try:
-        app.run()
-    finally:
-        # Ensure the database connection is closed gracefully on exit
-        saver.close()
+                print(f"Processing: {offset}, {key}")
+
+                # insert into duckdb
+                insert_article(con, value)
+                # db commit 
+                con.commit() 
+
+                # commit offset after db commit succeeds
+                consumer.store_offsets(msg)
+                time.sleep(5)
 
 if __name__ == "__main__":
-    try:
+    try: 
         main()
     except KeyboardInterrupt:
-        print("Stopping DuckDB consumer...")
+        print("Stopping consumer...")
