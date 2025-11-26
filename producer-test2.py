@@ -16,8 +16,16 @@ def fetch_gdelt_data(query="cyber"):
         "format": "json"
     }
 
+    headers = {
+        "User-Agent": (
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+            "AppleWebKit/537.36 (KHTML, like Gecko) "
+            "Chrome/122.0.0.0 Safari/537.36"
+        )
+    }
+
     while True:
-        response = requests.get(GDELT_URL, params=params, timeout=10)
+        response = requests.get(GDELT_URL, params=params, headers=headers, timeout=10)
         
         # handle rate limits from api 
         if response.status_code == 429:
@@ -34,7 +42,7 @@ def fetch_gdelt_data(query="cyber"):
 def main():
     logging.basicConfig(level=logging.INFO)
 
-    TARGET = 1000
+    TARGET = 10000 # 10K
     total_count = 0
 
     app = Application(
@@ -68,11 +76,11 @@ def main():
                     break
 
                 # Wait a bit before the next API call
-                time.sleep(60)
+                time.sleep(10)
 
             except Exception as e:
                 logging.error(f"Error: {e}")
-                time.sleep(60)
+                time.sleep(10)
 
     print("\n Finished! Collected exactly 1000 articles.\n")
 

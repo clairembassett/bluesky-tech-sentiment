@@ -11,9 +11,9 @@ DB_PATH = "gdeltnews.duckdb"
 TABLE_NAME = "gdelt_articles"
 
 # intialize variable to keep track of processed articles
-processed_count = 0
+# processed_count = 0
 
-def _init_duckdb(self):
+def init_duckdb():
     # create duckdb connection 
     con = duckdb.connect(DB_PATH)
 
@@ -43,8 +43,8 @@ def insert_article(con, article):
         article.get("url"),
         article.get("publishedAt")
     ])
-    processed_count += 1
-    print(f"Success, total processed: {processed_count}")
+    # processed_count += 1
+    # print(f"Success, total processed: {processed_count}")
 
 
 def main():
@@ -55,14 +55,14 @@ def main():
     app = Application(
         broker_address="localhost:19092",
         loglevel="DEBUG",
-        consumer_group="gdelt_processing_group",
+        consumer_group="gdelt_processing",
         auto_offset_reset="earliest",
     )
 
     # consume messages 
-    with app.get_consumer() as consume:
+    with app.get_consumer() as consumer:
         # topic
-        consumer.subscribe(["gdelt_articles"])
+        consumer.subscribe(["gdelt_cyber"])
 
         while True:
             msg = consumer.poll(1)
@@ -72,7 +72,7 @@ def main():
             
             try: 
                 # decode
-                key = msg.key().decode("utf-8") if msg.key() else None
+                key = msg.key().decode("utf-8") if msg is None else None
                 value = json.loads(msg.value().decode("utf-8"))
                 offset = msg.offset() 
 
@@ -86,10 +86,14 @@ def main():
                 # commit offset after db commit succeeds
                 consumer.store_offsets(msg)
                 time.sleep(5)
+                
+            except json.JSONDecodeError as e:
+                print(f"WARNING: skipping {offset} because {e}") 
+                consumer.store_offsets(msg) 
 
 
 if __name__ == "__main__":
-    try: 
+    try:
         main()
     except KeyboardInterrupt:
-        print("Stopping consumer...")
+        print("Stopping consumer")
