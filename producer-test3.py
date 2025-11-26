@@ -2,22 +2,24 @@ import requests
 import json
 import time
 import logging
+import os 
+from datetime import datetime
 from quixstreams import Application
 
-# ---------------------------------------
-# GDELT DOC API endpoint
-# ---------------------------------------
+
 # GDELT_URL = "https://api.gdeltproject.org/api/v2/doc/doc"
-GDELT_URL = "https://api.gdeltproject.org/api/v2/doc/doc?query=(clinton OR biden OR trump)"
+GDELT_URL = "https://api.gdeltproject.org/api/v2/doc/doc?query=(politics OR trump)&maxrecords=175&timespan=1month"
+TOPIC_NAME = "gdelt51"
 
-TOPIC_NAME = "gdelt3"
 
-# def fetch_gdelt_data(query="cyber"):
 def fetch_gdelt_data():
+# def fetch_gdelt_data(start_record=1, max_records=100):
     params = {
         # "query": query,
         "mode": "ArtList",
-        "format": "json"
+        "format": "json",
+        # "maxrecords": max_records,
+        # "startrecord": start_record
     }
 
     headers = {
@@ -28,15 +30,18 @@ def fetch_gdelt_data():
         )
     }
 
+
     while True:
-        response = requests.get(GDELT_URL, params=params, headers=headers, timeout=10)
+        response = requests.get(GDELT_URL, params = params, headers=headers, timeout=10)
         
         # handle rate limits from api 
         if response.status_code == 429:
             logging.warning("429 Too Many Requests – backing off for 2 minutes...")
             time.sleep(120)    
             continue 
+
         response.raise_for_status()
+
         return response.json()
 
 
@@ -46,8 +51,11 @@ def fetch_gdelt_data():
 def main():
     logging.basicConfig(level=logging.INFO)
 
-    TARGET = 75 
+    TARGET = 275
     total_count = 0
+    page_size= 100
+    start_record = 1
+
 
     app = Application(
         broker_address="localhost:19092",
@@ -56,12 +64,13 @@ def main():
 
     with app.get_producer() as producer:
         while total_count < TARGET:
+
             try:
-                # data = fetch_gdelt_data(query="cyber")
                 data = fetch_gdelt_data() 
+                # data = fetch_gdelt_data(start_record=start_record, max_records=page_size)
                 articles = data.get("articles", [])
 
-                logging.info(f"Fetched {len(articles)} articles from GDELT")
+                logging.info(f"Fetched {len(articles)} articles, (startrecord={start_record})")
 
                 for article in articles:
                     if total_count >= TARGET:
@@ -75,6 +84,11 @@ def main():
                     total_count += 1
 
                 logging.info(f"Total collected so far: {total_count}")
+
+                producer.flush()                
+
+                # advane pagnination
+                start_record += page_size
 
                 # Stop once 1000 reached
                 if total_count >= TARGET:

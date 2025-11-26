@@ -8,7 +8,9 @@ from threading import Lock
 DB_PATH = "gdeltnews.duckdb"
 # ur just gonna have to add ur specific path to the script when u go to run bc then i cant run it 
 
-TABLE_NAME = "gdelt_articles"
+TOPIC_NAME = "gdelt51"
+CONSUMER_NAME = "gdelt_processing51"
+TABLE_NAME = "gdelt_articles51"
 
 # intialize variable to keep track of processed articles
 # processed_count = 0
@@ -17,31 +19,33 @@ def init_duckdb():
     # create duckdb connection 
     con = duckdb.connect(DB_PATH)
 
-    # creat table if doesn't already exist to store articles
+    # create table if doesn't already exist to store articles
+    # can add source country! 
     con.execute(f"""
         CREATE TABLE IF NOT EXISTS {TABLE_NAME} (
-            id INTEGER PRIMARY KEY,
-            author TEXT, 
+            id INTEGER,
+            koffset BIGINT,
             title TEXT, 
-            description TEXT,
+            sourcecountry TEXT, 
             url TEXT UNIQUE, 
-            publishedAt TIMESTAMP
+            seendate TEXT
         );
     """)
     return con
 
-def insert_article(con, article):
+def insert_article(con, article, offset):
     # insert into duckdb 
     # Do NOT specify 'id'; DuckDB will generate it automatically
     con.execute(f"""
-        INSERT OR IGNORE INTO {TABLE_NAME} (author, title, description, url, publishedAt)
+        INSERT OR IGNORE INTO {TABLE_NAME} (koffset, title, sourcecountry, url, seendate)
         VALUES (?, ?, ?, ?, ?);
     """, [
-        article.get("author"),
+        # i want offset number here as id,
+        offset,
         article.get("title"),
-        article.get("description"),
+        article.get("sourcecountry"),
         article.get("url"),
-        article.get("publishedAt")
+        article.get("seedate")
     ])
     # processed_count += 1
     # print(f"Success, total processed: {processed_count}")
@@ -51,45 +55,71 @@ def main():
     # initialize connection 
     con = init_duckdb() 
 
+    TARGET = 275 
+    total_count = 0
+
     # initialize app 
     app = Application(
         broker_address="localhost:19092",
         loglevel="DEBUG",
-        consumer_group="gdelt_processing",
+        consumer_group=CONSUMER_NAME,
         auto_offset_reset="earliest",
     )
 
     # consume messages 
     with app.get_consumer() as consumer:
         # topic
-        consumer.subscribe(["gdelt_cyber"])
+        consumer.subscribe([TOPIC_NAME])
 
-        while True:
+        while total_count <= TARGET:
             msg = consumer.poll(1)
 
-            if msg is None:
-                print("Waiting...")
-            
-            try: 
-                # decode
-                key = msg.key().decode("utf-8") if msg is None else None
-                value = json.loads(msg.value().decode("utf-8"))
-                offset = msg.offset() 
+            if msg is not None:
+                # check for error 
+                if msg.error():
+                    raise Exception(f"Consumer error: {msg.error()}")
 
-                print(f"Processing: {offset}, {key}")
+                # process valid message 
+                try: 
+                    # decode
+                    offset = msg.offset() 
+                    key = msg.key().decode("utf-8") if msg is None else None
 
-                # insert into duckdb
-                insert_article(con, value)
-                # db commit 
-                con.commit() 
+                    if msg.value() is None:
+                        print(f"Skipping message at offset {offset}")
+                        consumer.store_offsets(msg)
+                        continue 
 
-                # commit offset after db commit succeeds
-                consumer.store_offsets(msg)
-                time.sleep(5)
+                    value = json.loads(msg.value().decode("utf-8"))
+                    
+
+                    print(f"Processing: {offset}")
+
+                    # insert into duckdb
+                    insert_article(con, value, offset)
+                    # db commit 
+                    con.commit() 
+
+                    # commit offset after db commit succeeds
+                    consumer.store_offsets(msg)
+                    time.sleep(2)
+          
                 
-            except json.JSONDecodeError as e:
-                print(f"WARNING: skipping {offset} because {e}") 
-                consumer.store_offsets(msg) 
+                except json.JSONDecodeError as e:
+                    print(f"WARNING: skipping {offset} because {e}") 
+                    consumer.store_offsets(msg) 
+            else:
+                # runs when consumer.poll(1) returns None
+                print("Waiting...")
+                time.sleep(2)
+
+            total_count += 1
+
+            if total_count >= TARGET:
+                    break
+
+        # done consuming
+        print("\n Finished consuming")
 
 
 if __name__ == "__main__":
