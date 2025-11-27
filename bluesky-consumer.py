@@ -5,15 +5,14 @@ import duckdb
 
 TOPIC_NAME = "blueksy"
 GROUP_NAME = "bluesky-con"
-DB_PATH = "bluesky.duckdb"
-TABLE_NAME = "articles"
+DB_PATH = "blueskytest.duckdb"
+TABLE_NAME = "articlesCB"
 
 def init_duckdb():
     # create duckdb connection 
     con = duckdb.connect(DB_PATH)
 
     # create table if doesn't already exist to store articles
-    # can add source country! 
     con.execute(f"""
         CREATE TABLE IF NOT EXISTS {TABLE_NAME} (
             number BIGINT PRIMARY KEY,
@@ -28,7 +27,7 @@ def insert_article(con, article, offset):
     # insert into duckdb 
     # Do NOT specify 'id'; DuckDB will generate it automatically
     con.execute(f"""
-        INSERT OR IGNORE INTO {TABLE_NAME} (number, operation, type, time)
+        INSERT INTO {TABLE_NAME} (number, operation, type, time)
         VALUES (?, ?, ?, ?)
         ON CONFLICT (number) DO NOTHING;
     """, [
