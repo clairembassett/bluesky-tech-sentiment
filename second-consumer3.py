@@ -4,7 +4,7 @@ import duckdb
 import time
 
 DB_PATH = "gdeltnews.duckdb"
-TABLE_NAME = "gdelt_articles"
+TABLE_NAME = "gdelt_articles6"
 
 # Track processed articles
 processed_count = 0
@@ -18,7 +18,7 @@ def init_duckdb():
 
     con.execute(f"""
         CREATE TABLE IF NOT EXISTS {TABLE_NAME} (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id INTEGER PRIMARY KEY,
             author TEXT,
             title TEXT,
             description TEXT,
@@ -60,13 +60,13 @@ def main():
     app = Application(
         broker_address="localhost:19092",
         loglevel="DEBUG",
-        consumer_group="gdelt_processing_group",
+        consumer_group="gdelt_processing6",
         auto_offset_reset="earliest",
     )
 
     with app.get_consumer() as consumer:
 
-        consumer.subscribe(["gdelt_articles"])
+        consumer.subscribe(["gdelt6"])
         print("Consumer running... waiting for messages.")
 
         while True:

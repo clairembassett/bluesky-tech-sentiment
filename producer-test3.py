@@ -9,7 +9,7 @@ from quixstreams import Application
 
 GDELT_URL = "https://api.gdeltproject.org/api/v2/doc/doc"
 #GDELT_URL = "https://api.gdeltproject.org/api/v2/doc/doc?query=(politics OR trump)&maxrecords=175&timespan=1month"
-TOPIC_NAME = "gdelt51"
+TOPIC_NAME = "gdelt52"
 
 
 def fetch_gdelt_data(query="sourcecountry:US"):

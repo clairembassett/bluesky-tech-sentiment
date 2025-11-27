@@ -8,9 +8,9 @@ from threading import Lock
 DB_PATH = "gdeltnews.duckdb"
 # ur just gonna have to add ur specific path to the script when u go to run bc then i cant run it 
 
-TOPIC_NAME = "gdeltUS" 
-CONSUMER_NAME = "gdelt_processing100"
-TABLE_NAME = "gdelt_articles100"
+TOPIC_NAME = "gdelt6" 
+CONSUMER_NAME = "gdelt_processing6"
+TABLE_NAME = "gdelt_articles6"
 
 # intialize variable to keep track of processed articles
 # processed_count = 0

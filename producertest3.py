@@ -7,7 +7,8 @@ from quixstreams import Application
 # ---------------------------------------
 # GDELT DOC API endpoint
 # ---------------------------------------
-GDELT_URL = "https://api.gdeltproject.org/api/v2/doc/doc"
+# GDELT_URL = "https://api.gdeltproject.org/api/v2/doc/doc"
+GDELT_URL = "https://api.gdeltproject.org/api/v2/doc/doc?maxrecords=175"
 
 def fetch_gdelt_data(query="sourcecountry:US"):
     """Fetch recent GDELT articles, handle rate limits and empty responses."""
@@ -61,7 +62,7 @@ def fetch_gdelt_data(query="sourcecountry:US"):
 def main():
     logging.basicConfig(level=logging.INFO)
 
-    TARGET = 1000
+    TARGET = 250 
     total_sent = 0
     seen_urls = set()  # deduplicate by URL
 
@@ -91,7 +92,7 @@ def main():
 
                 # send to Kafka
                 producer.produce(
-                    topic="gdelt_cyber",
+                    topic="gdelt6",
                     key=url,
                     value=json.dumps(article)
                 )
