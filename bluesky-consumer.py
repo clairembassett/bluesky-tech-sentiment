@@ -3,10 +3,10 @@ import json
 import time 
 import duckdb 
 
-TOPIC_NAME = "bluesky4"
-GROUP_NAME = "bluesky-con4"
+TOPIC_NAME = "bluesky43"
+GROUP_NAME = "bluesky-con43"
 DB_PATH = "bluesky.duckdb"
-TABLE_NAME = "articles4"
+TABLE_NAME = "articles43"
 
 def init_duckdb():
     # create duckdb connection 
@@ -28,20 +28,23 @@ def init_duckdb():
 
 def insert_article(con, article):
     # insert into duckdb 
-    # Do NOT specify 'id'; DuckDB will generate it automatically
     con.execute(f"""
         INSERT INTO {TABLE_NAME} (operation, type, created_time, description)
         VALUES (?, ?, ?, ?)
         ON CONFLICT (id) DO NOTHING;
     """, [
         article["commit"]["operation"], # as operation 
-        article["commit"]["record"].get("embed", {}).get("$type", "unknown"), # as type
-        article["commit"]["record"].get("createdAt"), # as time
-        article["commit"]["record"].get("text") # description
+        article["commit"]["record"].get("embed", {}).get("$type") or "unknown", # as type
+        article["commit"]["record"].get("createdAt", "unknown"), # as time
+        article["commit"]["record"].get("text", "unknown") # description
     ])
 
 def main():
     con = init_duckdb()
+
+    # target has to be one less than the number we want bc offset starts at 0, not 1
+    TARGET = 99
+    total_count = 0
 
     app = Application(
         broker_address="127.0.0.1:19092",
@@ -57,6 +60,9 @@ def main():
         consumer.subscribe([TOPIC_NAME])
        
         while True:
+            if total_count == TARGET:
+                break
+
             msg = consumer.poll(1)
 
             if msg is None:
@@ -72,14 +78,21 @@ def main():
 
                 print(f"Processing: {offset}")
 
+                # insert into duckdb
                 insert_article(con, value)
                 con.commit() 
 
                 consumer.store_offsets(msg)
+                # keep track of article number consumed for stopping purposes
+                total_count = offset 
+                print(f"COUNT: {total_count}")
 
             except Exception as e:
                 print(f"Error processing message: {e}")
                 time.sleep(2)
+
+        # done consuming
+        print("\n Finished consuming")
 
 
 if __name__ == "__main__":
