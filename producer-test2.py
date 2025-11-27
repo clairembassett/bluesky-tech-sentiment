@@ -8,14 +8,14 @@ from quixstreams import Application
 # GDELT DOC API endpoint
 # ---------------------------------------
 # GDELT_URL = "https://api.gdeltproject.org/api/v2/doc/doc"
-GDELT_URL = "https://api.gdeltproject.org/api/v2/doc/doc?query=(clinton OR biden OR trump)"
+GDELT_URL = "https://api.gdeltproject.org/api/v2/doc/doc"
 
-TOPIC_NAME = "gdelt3"
+TOPIC_NAME = "gdeltUS"
 
-# def fetch_gdelt_data(query="cyber"):
-def fetch_gdelt_data():
+def fetch_gdelt_data(query="sourcecountry:US"):
+#def fetch_gdelt_data():
     params = {
-        # "query": query,
+        "query": query,
         "mode": "ArtList",
         "format": "json"
     }
@@ -46,7 +46,8 @@ def fetch_gdelt_data():
 def main():
     logging.basicConfig(level=logging.INFO)
 
-    TARGET = 75 
+    TARGET = 1000
+    
     total_count = 0
 
     app = Application(
