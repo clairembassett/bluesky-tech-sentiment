@@ -24,6 +24,8 @@ async def listen_to_bluesky():
         value_serializer="json",
     )
 
+    message_count = 0
+
     while True:
       try:
         async with websockets.connect(
@@ -53,6 +55,11 @@ async def listen_to_bluesky():
                       value=serialized.value
                   )
 
+              message_count += 1  
+              if message_count >= 1000:
+                print(f"Processed {message_count} messages, stopping...")
+                return
+        
               # print(serialized)
 
             except websockets.ConnectionClosed as e:
