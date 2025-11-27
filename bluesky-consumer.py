@@ -3,39 +3,68 @@ import json
 import time 
 import duckdb 
 
-TOPIC_NAME = "blueksy"
+TOPIC_NAME = "bluesky"
 GROUP_NAME = "bluesky-con"
-DB_PATH = "blueskytest.duckdb"
-TABLE_NAME = "articlesCB"
+DB_PATH = "bluesky.duckdb"
+TABLE_NAME = "bluesky"
 
 def init_duckdb():
-    # create duckdb connection 
-    con = duckdb.connect(DB_PATH)
 
-    # create table if doesn't already exist to store articles
-    con.execute(f"""
-        CREATE TABLE IF NOT EXISTS {TABLE_NAME} (
+    con = duckdb.connect(DB_PATH) #Create DuckDB Connection
+
+    #Creates table to store posts if it does not exist
+    con.execute(f""" 
+        CREATE TABLE IF NOT EXISTS {TABLE_NAME} ( 
             number BIGINT PRIMARY KEY,
-            operation TEXT, 
+            operation TEXT,
             type TEXT,
-            time DATETIME
+            createdAt TEXT,
+            text TEXT
         );
     """)
     return con
 
-def insert_article(con, article, offset):
-    # insert into duckdb 
-    # Do NOT specify 'id'; DuckDB will generate it automatically
+#CHANGES ORIGINAL -> New
+
+# def insert_article(con, article, offset):
+#     # insert into duckdb 
+#     # Do NOT specify 'id'; DuckDB will generate it automatically
+#     con.execute(f"""
+#         INSERT INTO {TABLE_NAME} (number, operation, type, time)
+#         VALUES (?, ?, ?, ?)
+#         ON CONFLICT (number) DO NOTHING;
+#     """, [
+#         offset, # as number
+#         article["commit"]["operation"], # as operation 
+#         article["commit"]["record"].get("$type", "unknown"), # as type
+#         article["commit"]["record"].get("createdAt") # as time
+#     ])
+
+# Inserts in to duckdb
+def insert_post(con, value, offset):
+    commit = value.get("commit", {}) #Uses the original method but in two different parts
+    record = commit.get("record")
+
+    # Only processes post and posts with records
+    if not record or record.get("$type") != "app.bsky.feed.post":
+        return False
+
+    operation = commit.get("operation")
+    createdAt = record.get("createdAt")
+    text = record.get("text", "")
+
     con.execute(f"""
-        INSERT INTO {TABLE_NAME} (number, operation, type, time)
-        VALUES (?, ?, ?, ?)
+        INSERT INTO {TABLE_NAME} (number, operation, type, createdAt, text)
+        VALUES (?, ?, ?, ?, ?)
         ON CONFLICT (number) DO NOTHING;
     """, [
-        offset, # as number
-        article["commit"]["operation"], # as operation 
-        article["commit"]["record"].get("$type", "unknown"), # as type
-        article["commit"]["record"].get("createdAt") # as time
+        offset,
+        operation,
+        record.get("$type"),
+        createdAt,
+        text
     ])
+    return True
 
 def main():
     con = init_duckdb()
@@ -50,6 +79,9 @@ def main():
         }
     )
 
+    Target = 100000
+    count = 0
+
     with app.get_consumer() as consumer:
         consumer.subscribe([TOPIC_NAME])
        
@@ -58,6 +90,7 @@ def main():
 
             if msg is None:
                 print("Waiting...")
+                continue
 
             if msg.error() is not None:
                 raise Exception(msg.error())
@@ -69,8 +102,17 @@ def main():
 
                 print(f"Processing: {offset}")
 
-                insert_article(con, value, offset)
-                con.commit() 
+                inserted = insert_post(con, value, offset)
+
+                # Adds to count if post was inserted
+                if inserted:
+                    count += 1
+                    print(f"Inserted post {count}/{Target}")
+
+                    if count >= Target:
+                        print(f"Reached target of {Target} posts!")
+                        break  # Exit the loop
+
 
                 consumer.store_offsets(msg)
                 time.sleep(2) 
