@@ -59,7 +59,7 @@ async def listen_to_bluesky():
                   )
 
               message_count += 1  
-              if message_count >= 1000:
+              if message_count >= 100:
                 print(f"Processed {message_count} messages, stopping...")
                 return
         
