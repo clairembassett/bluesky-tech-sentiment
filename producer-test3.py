@@ -7,15 +7,15 @@ from datetime import datetime
 from quixstreams import Application
 
 
-# GDELT_URL = "https://api.gdeltproject.org/api/v2/doc/doc"
-GDELT_URL = "https://api.gdeltproject.org/api/v2/doc/doc?query=(politics OR trump)&maxrecords=175&timespan=1month"
+GDELT_URL = "https://api.gdeltproject.org/api/v2/doc/doc"
+#GDELT_URL = "https://api.gdeltproject.org/api/v2/doc/doc?query=(politics OR trump)&maxrecords=175&timespan=1month"
 TOPIC_NAME = "gdelt51"
 
 
-def fetch_gdelt_data():
+def fetch_gdelt_data(query="sourcecountry:US"):
 # def fetch_gdelt_data(start_record=1, max_records=100):
     params = {
-        # "query": query,
+        "query": query,
         "mode": "ArtList",
         "format": "json",
         # "maxrecords": max_records,
