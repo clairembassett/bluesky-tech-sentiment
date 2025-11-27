@@ -3,39 +3,41 @@ import json
 import time 
 import duckdb 
 
-TOPIC_NAME = "blueksy"
-GROUP_NAME = "bluesky-con"
+TOPIC_NAME = "bluesky4"
+GROUP_NAME = "bluesky-con4"
 DB_PATH = "bluesky.duckdb"
-TABLE_NAME = "articles"
+TABLE_NAME = "articles4"
 
 def init_duckdb():
     # create duckdb connection 
     con = duckdb.connect(DB_PATH)
 
     # create table if doesn't already exist to store articles
-    # can add source country! 
+    con.execute(f"CREATE SEQUENCE IF NOT EXISTS seq START 1;")
+
     con.execute(f"""
         CREATE TABLE IF NOT EXISTS {TABLE_NAME} (
-            number BIGINT PRIMARY KEY,
+            id INTEGER DEFAULT nextval('seq') PRIMARY KEY,
             operation TEXT, 
             type TEXT,
-            time DATETIME
+            created_time TIMESTAMP,
+            description TEXT
         );
     """)
     return con
 
-def insert_article(con, article, offset):
+def insert_article(con, article):
     # insert into duckdb 
     # Do NOT specify 'id'; DuckDB will generate it automatically
     con.execute(f"""
-        INSERT OR IGNORE INTO {TABLE_NAME} (number, operation, type, time)
+        INSERT INTO {TABLE_NAME} (operation, type, created_time, description)
         VALUES (?, ?, ?, ?)
-        ON CONFLICT (number) DO NOTHING;
+        ON CONFLICT (id) DO NOTHING;
     """, [
-        offset, # as number
         article["commit"]["operation"], # as operation 
-        article["commit"]["record"].get("$type", "unknown"), # as type
-        article["commit"]["record"].get("createdAt") # as time
+        article["commit"]["record"].get("embed", {}).get("$type", "unknown"), # as type
+        article["commit"]["record"].get("createdAt"), # as time
+        article["commit"]["record"].get("text") # description
     ])
 
 def main():
@@ -70,11 +72,10 @@ def main():
 
                 print(f"Processing: {offset}")
 
-                insert_article(con, value, offset)
+                insert_article(con, value)
                 con.commit() 
 
                 consumer.store_offsets(msg)
-                time.sleep(2) 
 
             except Exception as e:
                 print(f"Error processing message: {e}")

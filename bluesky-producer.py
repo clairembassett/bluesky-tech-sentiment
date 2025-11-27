@@ -6,7 +6,7 @@ import json
 
 KAFKA_BROKER = os.getenv("KAFKA_BROKER", "127.0.0.1:19092,127.0.0.1:29092,127.0.0.1:39092")
 uri = "wss://jetstream2.us-west.bsky.network/subscribe?wantedCollections=app.bsky.feed.post"
-TOPIC_NAME = "blueksy"
+TOPIC_NAME = "bluesky4"
 
 # async means python, u do this on ur own time if u need to buffer it off for  few milliseconds 
 async def listen_to_bluesky():
