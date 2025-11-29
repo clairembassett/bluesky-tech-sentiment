@@ -6,7 +6,7 @@ import json
 
 KAFKA_BROKER = os.getenv("KAFKA_BROKER", "127.0.0.1:19092,127.0.0.1:29092,127.0.0.1:39092")
 uri = "wss://jetstream2.us-west.bsky.network/subscribe?wantedCollections=app.bsky.feed.post"
-TOPIC_NAME = "bluesky5"
+TOPIC_NAME = "bluesky6"
 
 # async means python, u do this on ur own time if u need to buffer it off for  few milliseconds 
 async def listen_to_bluesky():
@@ -59,7 +59,7 @@ async def listen_to_bluesky():
                   )
 
               message_count += 1  
-              if message_count >= 103000:
+              if message_count >= 103000: # 103K
                 print(f"Processed {message_count} messages, stopping...")
                 return
         

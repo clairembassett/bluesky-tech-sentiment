@@ -24,22 +24,6 @@ def init_duckdb():
     """)
     return con
 
-#CHANGES ORIGINAL -> New
-
-# def insert_article(con, article, offset):
-#     # insert into duckdb 
-#     # Do NOT specify 'id'; DuckDB will generate it automatically
-#     con.execute(f"""
-#         INSERT INTO {TABLE_NAME} (number, operation, type, time)
-#         VALUES (?, ?, ?, ?)
-#         ON CONFLICT (number) DO NOTHING;
-#     """, [
-#         offset, # as number
-#         article["commit"]["operation"], # as operation 
-#         article["commit"]["record"].get("$type", "unknown"), # as type
-#         article["commit"]["record"].get("createdAt") # as time
-#     ])
-
 # Inserts in to duckdb
 def insert_post(con, value, offset):
     commit = value.get("commit", {}) #Uses the original method but in two different parts
@@ -79,7 +63,7 @@ def main():
         }
     )
 
-    Target = 100000
+    Target = 103000 #103K 
     count = 0
 
     with app.get_consumer() as consumer:
