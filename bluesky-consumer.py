@@ -3,6 +3,8 @@ import json
 import time 
 import duckdb 
 
+# was doing about 1048 messages every 10 seconds 
+
 TOPIC_NAME = "bluesky6"
 GROUP_NAME = "bluesky-con6"
 DB_PATH = "bluesky-posts.duckdb"
@@ -100,7 +102,6 @@ def main():
 
 
                 consumer.store_offsets(msg)
-                time.sleep(2) 
 
             except Exception as e:
                 print(f"Error processing message: {e}")
