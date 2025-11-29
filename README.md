@@ -25,3 +25,6 @@ Claire 11/21
 - Messages are recieved per article 
 - con-prod2 needs to have a break at 1000 articles(for now)
 - keep getting this error message for con-prod2 Constraint Error: NOT NULL constraint failed: gdelt_articles.id time for mallard!!
+
+
+started running around 5 pm 11/27
