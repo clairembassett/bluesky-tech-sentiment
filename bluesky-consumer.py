@@ -3,10 +3,10 @@ import json
 import time 
 import duckdb 
 
-TOPIC_NAME = "bluesky5"
-GROUP_NAME = "bluesky-con"
-DB_PATH = "bluesky.duckdb"
-TABLE_NAME = "blueskydb"
+TOPIC_NAME = "bluesky6"
+GROUP_NAME = "bluesky-con6"
+DB_PATH = "bluesky-posts.duckdb"
+TABLE_NAME = "posts"
 
 def init_duckdb():
 
@@ -63,7 +63,8 @@ def main():
         }
     )
 
-    Target = 100000
+    # setting target to match producer target
+    Target = 103000
     count = 0
 
     with app.get_consumer() as consumer:
