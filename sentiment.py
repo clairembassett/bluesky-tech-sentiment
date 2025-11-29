@@ -70,10 +70,16 @@ plt.ylabel("Number of Posts")
 plt.xlabel("Political Figure")
 plt.xticks(rotation=0)
 plt.tight_layout()
+# save plot output to jpg in repo 
+plt.savefig("political_sentiment.jpg", format="jpg", dpi=300)
+print("\nPlot saved to repo.")
+# show 
 plt.show()
+
 
 # ----------------------------
 # 7. Optional: save results
 # ----------------------------
+# save results to csv in repo 
 df.to_csv("bluesky_sentiment_results.csv", index=False)
 print("\nResults saved to bluesky_sentiment_results.csv")

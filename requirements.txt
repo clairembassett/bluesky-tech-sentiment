@@ -1,0 +1,10 @@
+duckdb
+pandas
+transformers
+seaborn
+matplotlib
+quixstreams
+json
+time
+asyncio
+wbesockets
