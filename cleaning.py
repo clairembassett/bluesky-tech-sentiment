@@ -9,11 +9,11 @@ import logging
 logging.basicConfig(level=logging.INFO)
 
 # Connecting to duckdb
-con = duckdb.connect("bluesky.duckdb")
+con = duckdb.connect("bluesky-posts.duckdb")
 
 
 # Loading data and printing out the total rows(the total number of posts)
-df = con.execute("SELECT * FROM blueskydb").fetchdf()
+df = con.execute("SELECT * FROM posts").fetchdf()
 print(f"Loaded {len(df)} rows from Bluesky DB.")
 
 # Ensuring that our data only contains posts, by filtering operation = create and type = post
@@ -45,10 +45,10 @@ logging.info(f"{len(df)} rows remain after keeping only English text")
 logging.info(f"After Cleaning: {len(df)} rows remain and number of columns remain {len(df.columns)}")
 
 # Saving the new df in duckdb
-con.register("cleandf", df)
+con.register("cleanddf", df)
 
 # Save as a new table in DuckDB
-con.execute("CREATE TABLE IF NOT EXISTS blueskyclean AS SELECT * FROM cleandf")
+con.execute("CREATE TABLE IF NOT EXISTS blueskyclean AS SELECT * FROM cleanddf")
 logging.info(f"Cleaned Dataframe saved as blueskyclean in DuckDB!")
 
 

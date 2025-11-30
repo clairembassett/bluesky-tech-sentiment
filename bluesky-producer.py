@@ -62,12 +62,9 @@ async def listen_to_bluesky():
                       value=serialized.value
                   )
               
-              logging.info(f"Produced message to Kafka topic {TOPIC_NAME} with key {serialized.key}")
+              logging.info(f"Produced message {message_count} to Kafka topic {TOPIC_NAME} with key {serialized.key}")
 
               message_count += 1  
-
-              if message_count % 1000 == 0:
-                logging.info(f"Processed {message_count} messages so far")
                 
               if message_count >= 103000: # 103K
 
