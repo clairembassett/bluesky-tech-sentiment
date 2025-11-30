@@ -2,6 +2,10 @@ from quixstreams import Application
 import json
 import time 
 import duckdb 
+import logging
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
 
 # was doing about 1048 messages every 10 seconds 
 
@@ -13,6 +17,7 @@ TABLE_NAME = "posts"
 def init_duckdb():
 
     con = duckdb.connect(DB_PATH) #Create DuckDB Connection
+    logging.info("Connected to DuckDB!")
 
     #Creates table to store posts if it does not exist
     con.execute(f""" 
@@ -65,6 +70,8 @@ def main():
         }
     )
 
+    logging.info("Quix Application initialized successfully.")
+
     # setting target to match producer target
     Target = 103000
     count = 0
@@ -76,7 +83,7 @@ def main():
             msg = consumer.poll(1)
 
             if msg is None:
-                print("Waiting...")
+                logging.info("Waiting for messages...")
                 continue
 
             if msg.error() is not None:
@@ -87,24 +94,24 @@ def main():
                 value = json.loads(msg.value().decode("utf-8"))
                 offset = msg.offset()
 
-                print(f"Processing: {offset}")
+                logging.info(f"Processing message with offset: {offset}")
 
                 inserted = insert_post(con, value, offset)
 
                 # Adds to count if post was inserted
                 if inserted:
                     count += 1
-                    print(f"Inserted post {count}/{Target}")
+                    logging.info(f"Inserted post {count}/{Target}")
 
                     if count >= Target:
-                        print(f"Reached target of {Target} posts!")
+                        logging.info(f"Reached target of {Target} posts! Exiting now!")
                         break  # Exit the loop
 
 
                 consumer.store_offsets(msg)
 
             except Exception as e:
-                print(f"Error processing message: {e}")
+                logging.error(f"Error processing message: {e}", exc_info=True)
                 time.sleep(2)
 
 
@@ -112,4 +119,4 @@ if __name__ == "__main__":
     try:
         main()
     except KeyboardInterrupt:
-        print("Stopping consumer")
+        logging.info(f"Stopping Consumer")

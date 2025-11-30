@@ -3,8 +3,11 @@ import websockets
 from quixstreams import Application
 import os
 import json
+import logging
 
-# was doing 2 messages every second
+
+# Set up logging
+logging.basicConfig(level=logging.INFO)
 
 KAFKA_BROKER = os.getenv("KAFKA_BROKER", "127.0.0.1:19092,127.0.0.1:29092,127.0.0.1:39092")
 uri = "wss://jetstream2.us-west.bsky.network/subscribe?wantedCollections=app.bsky.feed.post"
@@ -36,12 +39,11 @@ async def listen_to_bluesky():
             ping_timeout=60,   # Wait 60 seconds for pong response
             close_timeout=10
         ) as websocket:
-          print("Connected to Bluesky firehose...")
+          logging.info("Connected to Bluesky firehose...")
           while True:
             try:
               message = await websocket.recv()
               data = json.loads(message)
-              print(data)
 
              
               # Double checks post
@@ -59,23 +61,30 @@ async def listen_to_bluesky():
                       key=serialized.key,   
                       value=serialized.value
                   )
+              
+              logging.info(f"Produced message to Kafka topic {TOPIC_NAME} with key {serialized.key}")
 
               message_count += 1  
+
+              if message_count % 1000 == 0:
+                logging.info(f"Processed {message_count} messages so far")
+                
               if message_count >= 103000: # 103K
-                print(f"Processed {message_count} messages, stopping...")
+
+                logging.info(f"Processed {message_count} messages, stopping...")
                 return
         
               # print(serialized)
 
             except websockets.ConnectionClosed as e:
-              print(f"Connection closed: {e}")
+              logging.warning(f"Connection closed: {e}")
               break
             except Exception as e:
-              print(f"Error processing message: {e}")
+              logging.error(f"Error processing message: {e}", exc_info=True)
               continue
 
       except Exception as e:
-        print(f"Connection error: {e}. Reconnecting in 5 seconds...")
+        logging.error(f"Connection error: {e}. Reconnecting in 5 seconds...")
         await asyncio.sleep(5)
 
 
@@ -83,4 +92,4 @@ if __name__ == "__main__":
     try:
         asyncio.run(listen_to_bluesky())
     except KeyboardInterrupt:
-        print("\n\nStopping stream...")
+        logging.info(f"Stopping Producer")

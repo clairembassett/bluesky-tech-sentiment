@@ -3,9 +3,14 @@ import pandas as pd
 from transformers import pipeline
 import seaborn as sns
 import matplotlib.pyplot as plt
+import logging
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
 
 # Connecting to DuckDB
 con = duckdb.connect("bluesky-posts.duckdb")
+logging.info("Connected to DuckDB!")
 
 # Pulling the relevant information of tech moguls and their companies, by filtering the data frame
 df = con.execute("""
@@ -93,25 +98,21 @@ df["company"] = df["text"].apply(detect_company)
 df = df[(df["mogul"].notna()) | (df["company"].notna())]
 
 # Runnning the sentiment analysis with the transformers package
-print("Running sentiment analysis!")
+logging.info("Running sentiment analysis!")
 sentiment_analyzer = pipeline("sentiment-analysis")
 
 df["sentiment"] = df["text"].apply(lambda x: sentiment_analyzer(x)[0]["label"])
 df["score"] = df["text"].apply(lambda x: sentiment_analyzer(x)[0]["score"])
 
 # Printing summary tables of sentiment towards mogul
-print("\n### Sentiment Toward Moguls ###")
+logging.info("\n### Sentiment Toward Moguls ###")
 mogul_summary = df.groupby(["mogul", "sentiment"]).size().reset_index(name="count")
-print(mogul_summary)
+logging.info(mogul_summary)
 
-# print summary tables of sentiment towards company
+
 print("\n### Sentiment Toward Companies ###")
 company_summary = df.groupby(["company", "sentiment"]).size().reset_index(name="count")
 print(company_summary)
-
-# ***************************
-# creating color list so that the tech moguls and their companies have correspoding colored bars
-
 
 # Plotting sentiment towards tech moguls
 plt.figure(figsize=(12,6))
@@ -150,5 +151,6 @@ plt.show()
 
 # Saving final outputs - CSV file and graph JPG
 df.to_csv("mogul_company_sentiments.csv", index=False)
-print("\nSaved cleaned and analyzed results to mogul_company_sentiments.csv")
-print("Plots saved as mogul_sentiment.jpg and company_sentiment.jpg")
+
+logging.info("\nSaved cleaned and analyzed results to mogul_company_sentiments.csv")
+logging.info("Plots saved as mogul_sentiment.jpg and company_sentiment.jpg")

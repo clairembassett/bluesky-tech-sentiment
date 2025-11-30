@@ -7,6 +7,6 @@ quixstreams
 json
 time
 asyncio
-wbesockets
+websockets
 langdetect
 
