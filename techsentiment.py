@@ -104,32 +104,47 @@ print("\n### Sentiment Toward Moguls ###")
 mogul_summary = df.groupby(["mogul", "sentiment"]).size().reset_index(name="count")
 print(mogul_summary)
 
+# print summary tables of sentiment towards company
 print("\n### Sentiment Toward Companies ###")
 company_summary = df.groupby(["company", "sentiment"]).size().reset_index(name="count")
 print(company_summary)
 
+# ***************************
+# creating color list so that the tech moguls and their companies have correspoding colored bars
+
+
 # Plotting sentiment towards tech moguls
 plt.figure(figsize=(12,6))
 moguls = ["Altman", "Bezos", "Zuckerberg", "Musk", "Gates", "Pichai"]
+# using seaborn to make a barplot, with tech mogul on x axis and count of posts on y axis
+# coloring by sentiment, negative vs positive, and ordering by moguls
 sns.barplot(data=mogul_summary, x="mogul", y="count", hue="sentiment", order=moguls)
+# adding title and axis labels
 plt.title("Sentiment Toward Tech Moguls on Bluesky")
 plt.xlabel("Tech Mogul")
 plt.ylabel("Number of Posts")
 plt.xticks(rotation=45)
 plt.tight_layout()
+
+# saving plot as jpg to repo
 plt.savefig("mogul_sentiment.jpg", dpi=300)
 plt.show()
-
 
 # Plotting sentiment towards companies
 plt.figure(figsize=(12,6))
 companies = ["OpenAI", "Amazon", "Google", "Microsoft", "Meta", "Tesla"]
+# using seaborn to make a barplot, with company on x axis and count of posts on y axis
+# coloring by sentiment, negative vs positive, and ordering by companies
+# ordering ensures that both the moguls and their respective companies appear in the same order on the graph
 sns.barplot(data=company_summary, x="company", y="count", hue="sentiment", order=companies)
+# adding title and axis labels 
 plt.title("Sentiment Toward Their Companies on Bluesky")
 plt.xlabel("Company")
 plt.ylabel("Number of Posts")
 plt.xticks(rotation=45)
 plt.tight_layout()
+
+# saving plot as jpg to repo 
 plt.savefig("company_sentiment.jpg", dpi=300)
 plt.show()
 

@@ -7,12 +7,12 @@ from langdetect import detect, DetectorFactory
 DetectorFactory.seed = 0
 
 # Connecting to duckdb
-con = duckdb.connect("bluesky.duckdb")
+con = duckdb.connect("bluesky-posts.duckdb")
 
 
 # Loading data and printing out the total rows(the total number of posts)
-df = con.execute("SELECT * FROM blueskydb").fetchdf()
-print(f"Loaded {len(df)} rows from Bluesky DB.")
+df = con.execute("SELECT * FROM posts").fetchdf()
+print(f"Loaded {len(df)} rows from Bluesky Posts DB.")
 
 # Ensuring that our data only contains posts, by filtering operation = create and type = post
 df = df[(df['operation'] == 'create') & (df['type'] == 'app.bsky.feed.post')]
