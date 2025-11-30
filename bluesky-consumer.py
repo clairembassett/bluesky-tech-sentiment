@@ -33,7 +33,7 @@ def init_duckdb():
 
 # Inserts in to duckdb
 def insert_post(con, value, offset):
-    commit = value.get("commit", {}) #Uses the original method but in two different parts
+    commit = value.get("commit", {}) 
     record = commit.get("record")
 
     # Only processes post and posts with records
@@ -72,7 +72,7 @@ def main():
 
     logging.info("Quix Application initialized successfully.")
 
-    # setting target to match producer target
+    # Setting target to match producer target
     Target = 103000
     count = 0
 
