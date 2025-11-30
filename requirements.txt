@@ -8,3 +8,5 @@ json
 time
 asyncio
 wbesockets
+langdetect
+

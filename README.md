@@ -28,3 +28,8 @@ Claire 11/21
 
 
 started running around 5 pm 11/27
+
+Iliana 11/29
+- renamed and added comments to sentiment.py
+- created other-sentiment.py for a second analysis? I think we could do something abt the economy, or we could relate it to student loans/debt or job hiring bc that is very applicable to us
+- added code to save the output jpgs to the repo

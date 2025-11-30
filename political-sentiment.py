@@ -1,33 +1,26 @@
-# ------------------------------------------------------------
-# bluesky_sentiment_analysis.py
-# ------------------------------------------------------------
 import duckdb
 import pandas as pd
 from transformers import pipeline
 import seaborn as sns
 import matplotlib.pyplot as plt
 
-# ----------------------------
-# 1. Connect to DuckDB
-# ----------------------------
+# connect to DuckDB
 con = duckdb.connect("bluesky.duckdb")
 
-# ----------------------------
-# 2. Extract posts mentioning political figures
-# ----------------------------
+# ***************************
+# Make pandas dataframe 
+# only pulling rows that include names/terms we want to analyze
 df = con.execute("""
     SELECT number, text, createdAt
-    FROM blueskydb
+    FROM blueskyclean
     WHERE text ILIKE '%trump%' OR text ILIKE '%biden%' 
        OR text ILIKE '%liberal%' OR text ILIKE '%conservative%'
 """).fetchdf()
 
-# Ensure timestamp is datetime
+# ensure timestamp is datetime
 df['createdAt'] = pd.to_datetime(df['createdAt'], format='mixed', utc=True)
 
-# ----------------------------
-# 3. Assign political figure to each post
-# ----------------------------
+# function that makes all text in same text format for analyzing
 def assign_figure(text):
     text_lower = text.lower()
     if 'trump' in text_lower:
@@ -41,44 +34,46 @@ def assign_figure(text):
     else:
         return 'Other'
 
+# create new column where prev function is applied
 df['figure'] = df['text'].apply(assign_figure)
 
-# ----------------------------
-# 4. Sentiment Analysis
-# ----------------------------
+# ***************************
+# Sentiment analysis 
 print("Running sentiment analysis (may take a few minutes)...")
+# create variable for sentiment analyzer 
 sentiment_analyzer = pipeline("sentiment-analysis")
 
-# Apply sentiment analysis (this can take time on large datasets)
+# create new column for sentiment label
 df['sentiment'] = df['text'].apply(lambda x: sentiment_analyzer(x)[0]['label'])
+# create new column for sentiment score 
 df['score'] = df['text'].apply(lambda x: sentiment_analyzer(x)[0]['score'])
 
-# ----------------------------
-# 5. Summarize sentiment counts
-# ----------------------------
+# summarizing 
 sentiment_summary = df.groupby(['figure', 'sentiment']).size().reset_index(name='count')
 print("\nSentiment Summary:")
 print(sentiment_summary)
 
 # ----------------------------
-# 6. Plot sentiment counts by figure
-# ----------------------------
+# Plotting 
 plt.figure(figsize=(10,6))
+# make barplot w sentiment label on x axis and count on y
+# colored by negative vs positive sentiment 
 sns.barplot(data=sentiment_summary, x='figure', y='count', hue='sentiment')
+# make title 
 plt.title("Bluesky Posts Sentiment by Political Figure")
+# add axis labels
 plt.ylabel("Number of Posts")
 plt.xlabel("Political Figure")
+# don't rotate the axis labels
 plt.xticks(rotation=0)
 plt.tight_layout()
 # save plot output to jpg in repo 
 plt.savefig("political_sentiment.jpg", format="jpg", dpi=300)
 print("\nPlot saved to repo.")
-# show 
+# show plot 
 plt.show()
 
 
-# ----------------------------
-# 7. Optional: save results
 # ----------------------------
 # save results to csv in repo 
 df.to_csv("bluesky_sentiment_results.csv", index=False)
