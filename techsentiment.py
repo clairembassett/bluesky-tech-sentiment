@@ -17,7 +17,7 @@ logging.info("Connected to DuckDB!")
 # Respective companies chosen are OpenAI, Amazon, Meta, Tesla/SpaceX/X, Microsoft, Google
 df = con.execute("""
     SELECT number, text, createdAt
-    FROM blueskyclean
+    FROM blueskyclean 
     WHERE 
         -- Moguls
                  
@@ -116,41 +116,63 @@ print("\n### Sentiment Toward Companies ###")
 company_summary = df.groupby(["company", "sentiment"]).size().reset_index(name="count")
 print(company_summary)
 
+# Creating dict to make sentiments the same color on the bar graph 
+sentiment_palette = {
+    "POSITIVE": "#ff8a05", # orange
+    "NEGATIVE": "#2a1dd3" # dark blue 
+}
+
 # Plotting sentiment towards tech moguls
 plt.figure(figsize=(12,6))
+
 # Listing moguls 
-moguls = ["Altman", "Bezos", "Zuckerberg", "Musk", "Gates", "Pichai"]
-# using seaborn to make a barplot, with tech mogul on x axis and count of posts on y axis
-# coloring by sentiment, negative vs positive, and ordering by moguls
-sns.barplot(data=mogul_summary, x="mogul", y="count", hue="sentiment", order=moguls)
+moguls = ["Altman", "Bezos", "Gates", "Musk", "Pichai", "Zuckerberg"]
+
+# Using seaborn to make a barplot, with tech mogul on x axis and count of posts on y axis
+# Using hue to separate by sentiment, negative vs positive
+# Ordering by moguls
+# Using the palette to color the bars specifically
+ax = sns.barplot(data=mogul_summary, x="mogul", y="count", hue="sentiment", order=moguls, palette=sentiment_palette, width=0.7, dodge=True)
+
+# Adding legend to the plot
+plt.legend() 
+
 # adding title and axis labels
 plt.title("Sentiment Toward Tech Moguls on Bluesky")
 plt.xlabel("Tech Mogul")
 plt.ylabel("Number of Posts")
-plt.xticks(rotation=45)
+plt.xticks(rotation=0)
 plt.tight_layout()
 
 # saving plot as jpg to repo
 plt.savefig("mogul_sentiment.jpg", dpi=300)
-plt.show()
+# Only using plt.show() for testing, not for submitting
+# plt.show()
 
 # Plotting sentiment towards companies
 plt.figure(figsize=(12,6))
-companies = ["OpenAI", "Amazon", "Google", "Microsoft", "Meta", "Tesla"]
-# using seaborn to make a barplot, with company on x axis and count of posts on y axis
-# coloring by sentiment, negative vs positive, and ordering by companies
-# ordering ensures that both the moguls and their respective companies appear in the same order on the graph
-sns.barplot(data=company_summary, x="company", y="count", hue="sentiment", order=companies)
-# adding title and axis labels 
-plt.title("Sentiment Toward Their Companies on Bluesky")
+# Listing companies in order of their respective moguls
+companies = ["OpenAI", "Amazon", "Microsoft", "Tesla", "Google", "Meta"]
+
+# Using hue to separate by sentiment, negative vs positive
+# Ordering by moguls
+# Using the palette to color the bars specifically
+sns.barplot(data=company_summary, x="company", y="count", hue="sentiment", order=companies, palette=sentiment_palette, width=0.7, dodge=True)
+
+# Adding legend 
+plt.legend() 
+
+# Adding title and axis labels 
+plt.title("Sentiment Toward Moguls' Companies on Bluesky")
 plt.xlabel("Company")
 plt.ylabel("Number of Posts")
-plt.xticks(rotation=45)
+plt.xticks(rotation=0)
 plt.tight_layout()
 
 # saving plot as jpg to repo 
 plt.savefig("company_sentiment.jpg", dpi=300)
-plt.show()
+# Only using plt.show() for testing not for submitting 
+# plt.show()
 
 # Saving final outputs - CSV file and graph JPG
 df.to_csv("mogul_company_sentiments.csv", index=False)
