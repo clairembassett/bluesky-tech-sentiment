@@ -1,34 +1,10 @@
-# Sentiment Towards Tech Moguls and Companies Based on Bluesky Posts
-1. Bluesky producer, with target set to 103,000
-2. Bluesky consumer, with target set to 103,000
-3. Cleaning script to only keep posts in English, and ensure that they are feed posts 
-4. Two sentiment analysis scripts
+# Sentiment Analysis on Tech Moguls and their Companies on Bluesky
 
+This project entailed running a sentiment analysis on BlueSky posts, in order to measure the general sentiment regarding certain Tech Moguls and their companies. Highlighting, the overall negative sentiment towards both these companies and their leaders. This project was an assignment titled Data Project 3 completed for DS 3022 - Data Engineering at the University of Virginia, taught by Neal Magee.
 
-Iliana notes from 11/19:
-- order for running scripts is producer-test -> con-prod -> second-consumer
-- each time I do a new run/test I just make a new table in the same db, so rn there's 3 tables and my red pandas has 3 different topics/consumer groups
-- bad news: we are losing some data. idk where, but i know that for the most recent one there was ~5700 total results in topic, but only 294 messages in the final consumer group & duckdb table.
+This Repository Contains...
+1. Bluesky Producer Script - Collects 103,000 Messages from the BlueSky Firehose API using Kafka 
+2. Bluesky Consumer Script - Consumes these messages in Kafka and stores them in a DuckDB table
+3. Cleaning Script - Cleans the DuckDB table to ensure that only posts are included, removes null values, and filters for posts in English using LangDetect.
+4. Sentiment Analysis Script - Filters the dataframe for mentions of tech Moguls and Companies, then utilizes HuggingFaces Transformers - Pipeline to run sentiment analysis on the collected posts, then creates summary tables of the analysis, and visualizations
 
-Iliana from 11/20:
-- tried to update con-prod.py to not lose as many data points but didn't work. 
-- main thing is got rid of the processing gurantee of exactly-once bc apparently manually polling and commiting offsets violated the exactly-once gurantee and can cause issues. however doing so didn't get rid of our data lose problem...
-
-
-Claire 11/21
-- Going to retry our polling methods to do the for loop, because there are international articles coming up, plus will allow us for us to parse more?
-- Will label scripts producertest2, con-prod2, and second-consumer2
-- Little bit worried bc I can only make 100 requests per 24 hrs 
-- Switched to the gdelt api link here: https://blog.gdeltproject.org/gdelt-doc-2-0-api-debuts/
-- Set counter for producer to 1000, to test for leaky pipeline
-- Messages are recieved per article 
-- con-prod2 needs to have a break at 1000 articles(for now)
-- keep getting this error message for con-prod2 Constraint Error: NOT NULL constraint failed: gdelt_articles.id time for mallard!!
-
-
-started running around 5 pm 11/27
-
-Iliana 11/29
-- renamed and added comments to sentiment.py
-- created other-sentiment.py for a second analysis? I think we could do something abt the economy, or we could relate it to student loans/debt or job hiring bc that is very applicable to us
-- added code to save the output jpgs to the repo
