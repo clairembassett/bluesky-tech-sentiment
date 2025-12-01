@@ -11,7 +11,6 @@ logging.basicConfig(level=logging.INFO)
 # Connecting to duckdb
 con = duckdb.connect("bluesky-posts.duckdb")
 
-
 # Loading data and printing out the total rows(the total number of posts)
 df = con.execute("SELECT * FROM posts").fetchdf()
 print(f"Loaded {len(df)} rows from Bluesky DB.")

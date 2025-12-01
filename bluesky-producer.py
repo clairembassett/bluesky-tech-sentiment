@@ -9,8 +9,11 @@ import logging
 # Set up logging
 logging.basicConfig(level=logging.INFO)
 
+# Kafka url 
 KAFKA_BROKER = os.getenv("KAFKA_BROKER", "127.0.0.1:19092,127.0.0.1:29092,127.0.0.1:39092")
+# Bluesky Firehose url
 uri = "wss://jetstream2.us-west.bsky.network/subscribe?wantedCollections=app.bsky.feed.post"
+# Producer topic name 
 TOPIC_NAME = "bluesky6"
 
 # Async allows python to buffer if needed 
@@ -18,7 +21,6 @@ async def listen_to_bluesky():
 
     app = Application(
         broker_address=KAFKA_BROKER,
-        # consumer_group="wikipedia-producer",
         producer_extra_config={
             # Resolve localhost to 127.0.0.1 to avoid IPv6 issues
             "broker.address.family": "v4",
@@ -29,14 +31,18 @@ async def listen_to_bluesky():
         value_serializer="json",
     )
 
+    # Initialize message count for later on 
     message_count = 0
 
     while True:
       try:
         async with websockets.connect(
             uri,
-            ping_interval=20,  # Send ping every 20 seconds
-            ping_timeout=60,   # Wait 60 seconds for pong response
+            # Send ping every 20 seconds
+            ping_interval=20,  
+            # Wait 60 seconds for pong response
+            ping_timeout=60,  
+            # Close timout after 10 seconds of no response 
             close_timeout=10
         ) as websocket:
           logging.info("Connected to Bluesky firehose...")
@@ -44,7 +50,6 @@ async def listen_to_bluesky():
             try:
               message = await websocket.recv()
               data = json.loads(message)
-
              
               # Double checks post
               if data.get("commit", {}).get("record", {}).get("$type") != "app.bsky.feed.post":
@@ -64,14 +69,16 @@ async def listen_to_bluesky():
               
               logging.info(f"Produced message {message_count} to Kafka topic {TOPIC_NAME} with key {serialized.key}")
 
+              # Increase message count 
               message_count += 1  
                 
-              if message_count >= 103000: # 103K
-
+              # Target message count is 103K
+              if message_count >= 103000:
                 logging.info(f"Processed {message_count} messages, stopping...")
                 return
         
 
+            # Error handling 
             except websockets.ConnectionClosed as e:
               logging.warning(f"Connection closed: {e}")
               break
@@ -79,6 +86,7 @@ async def listen_to_bluesky():
               logging.error(f"Error processing message: {e}", exc_info=True)
               continue
 
+      # Error handling 
       except Exception as e:
         logging.error(f"Connection error: {e}. Reconnecting in 5 seconds...")
         await asyncio.sleep(5)

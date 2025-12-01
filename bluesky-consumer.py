@@ -15,11 +15,11 @@ DB_PATH = "bluesky-posts.duckdb"
 TABLE_NAME = "posts"
 
 def init_duckdb():
-
-    con = duckdb.connect(DB_PATH) #Create DuckDB Connection
+    # Create DuckDB Connection
+    con = duckdb.connect(DB_PATH) 
     logging.info("Connected to DuckDB!")
 
-    #Creates table to store posts if it does not exist
+    # Creates table to store posts if it does not exist
     con.execute(f""" 
         CREATE TABLE IF NOT EXISTS {TABLE_NAME} ( 
             number BIGINT PRIMARY KEY,
@@ -44,6 +44,7 @@ def insert_post(con, value, offset):
     createdAt = record.get("createdAt")
     text = record.get("text", "")
 
+    # Insert values as row in the duckdb table 
     con.execute(f"""
         INSERT INTO {TABLE_NAME} (number, operation, type, createdAt, text)
         VALUES (?, ?, ?, ?, ?)
@@ -58,6 +59,7 @@ def insert_post(con, value, offset):
     return True
 
 def main():
+    # Duckdb connection 
     con = init_duckdb()
 
     app = Application(
@@ -76,12 +78,14 @@ def main():
     Target = 103000
     count = 0
 
+    # Consumer 
     with app.get_consumer() as consumer:
         consumer.subscribe([TOPIC_NAME])
        
         while True:
             msg = consumer.poll(1)
 
+            # If no messages, wait 
             if msg is None:
                 logging.info("Waiting for messages...")
                 continue
@@ -90,12 +94,14 @@ def main():
                 raise Exception(msg.error())
             
             try:
+                # Get values 
                 key = msg.key().decode("utf8") if msg.key() else "NoKey" 
                 value = json.loads(msg.value().decode("utf-8"))
                 offset = msg.offset()
 
                 logging.info(f"Processing message with offset: {offset}")
 
+                # Insert post 
                 inserted = insert_post(con, value, offset)
 
                 # Adds to count if post was inserted
@@ -103,6 +109,7 @@ def main():
                     count += 1
                     logging.info(f"Inserted post {count}/{Target}")
 
+                    # Breaks the loop when reaches target number of posts 
                     if count >= Target:
                         logging.info(f"Reached target of {Target} posts! Exiting now!")
                         break  # Exit the loop
@@ -110,6 +117,7 @@ def main():
 
                 consumer.store_offsets(msg)
 
+            # Error handling 
             except Exception as e:
                 logging.error(f"Error processing message: {e}", exc_info=True)
                 time.sleep(2)

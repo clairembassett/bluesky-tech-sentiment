@@ -13,9 +13,11 @@ con = duckdb.connect("bluesky-posts.duckdb")
 logging.info("Connected to DuckDB!")
 
 # Pulling the relevant information of tech moguls and their companies, by filtering the data frame
+# Moguls chosen are Sam Altman, Mark Zuckerberg, Elon Musk, Bill Gates, and Sundar Pichai
+# Respective companies chosen are OpenAI, Amazon, Meta, Tesla/SpaceX/X, Microsoft, Google
 df = con.execute("""
     SELECT number, text, createdAt
-    FROM blueskypostsclean
+    FROM blueskyclean
     WHERE 
         -- Moguls
                  
@@ -50,13 +52,11 @@ df = con.execute("""
         text ILIKE '%tesla%' OR text ILIKE '%spacex%' OR
         text ILIKE '%x.com%' OR text ILIKE '%twitter%' OR
         text ILIKE '%microsoft%' OR text ILIKE '%copilot%' OR text ILIKE '%azure%' OR text ILIKE '%bing%' OR
-        text ILIKE '%google%' OR text ILIKE '%gemini%' OR text ILIKE '%deepmind%'
-                 
-        
+        text ILIKE '%google%' OR text ILIKE '%gemini%' OR text ILIKE '%deepmind%'       
 """).fetchdf()
 
 
-# Mapping keywords to ensure that results include all references to mogul/companies
+# Mapping keywords to ensure that results include all references to mogul
 mogul_keywords = {
     "Altman": ["altman", "sam altman", "sama"],
     "Bezos": ["bezos", "jeff bezos"],
@@ -66,6 +66,7 @@ mogul_keywords = {
     "Pichai": ["sundar", "pichai"],
 }
 
+# Mapping keywords to ensure that results include all references to company
 company_keywords= {
     "OpenAI": ["openai", "chatgpt"],
     "Amazon": ["amazon", "aws"],
@@ -75,7 +76,7 @@ company_keywords= {
     "Google": ["google", "gemini", "deepmind"]
 }
 
-# Mapping each keyword to its specific company or mogul
+# Mapping each keyword to its specific mogul
 def detect_mogul(text):
     tl = text.lower()
     for mogul, keys in mogul_keywords.items():
@@ -83,6 +84,7 @@ def detect_mogul(text):
             return mogul
     return None
 
+# Mapping each keyword to its specific company 
 def detect_company(text):
     tl = text.lower()
     for comp, keys in company_keywords.items():
@@ -109,13 +111,14 @@ logging.info("\n### Sentiment Toward Moguls ###")
 mogul_summary = df.groupby(["mogul", "sentiment"]).size().reset_index(name="count")
 logging.info(mogul_summary)
 
-
+# Printing summary tables of sentiement towards company
 print("\n### Sentiment Toward Companies ###")
 company_summary = df.groupby(["company", "sentiment"]).size().reset_index(name="count")
 print(company_summary)
 
 # Plotting sentiment towards tech moguls
 plt.figure(figsize=(12,6))
+# Listing moguls 
 moguls = ["Altman", "Bezos", "Zuckerberg", "Musk", "Gates", "Pichai"]
 # using seaborn to make a barplot, with tech mogul on x axis and count of posts on y axis
 # coloring by sentiment, negative vs positive, and ordering by moguls
