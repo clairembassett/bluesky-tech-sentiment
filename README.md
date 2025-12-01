@@ -1,5 +1,4 @@
-# Cyber-Vulnerability-Monitor-DP3-DS3022
-
+# Sentiment Towards Tech Moguls and Companies Based on Bluesky Posts
 1. Bluesky producer, with target set to 103,000
 2. Bluesky consumer, with target set to 103,000
 3. Cleaning script to only keep posts in English, and ensure that they are feed posts 
